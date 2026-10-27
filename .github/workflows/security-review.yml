@@ -1,0 +1,36 @@
+name: Security review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        description: "PR number to review"
+        required: true
+
+jobs:
+  security-review:
+    uses: cx-kedar-bhujade/prbot/.github/workflows/pr-security-review.yml@checkmarx-one-on-threatmodel-v2
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+      actions: read
+    with:
+      bot-repository: cx-kedar-bhujade/prbot
+      bot-ref: checkmarx-one-on-threatmodel-v2
+      provider: gemini
+      pr-number: ${{ inputs.pr-number || '' }}
+      inline-comments: true
+      cxone-top-n: 10
+      cxone-incremental: true
+      cxone-include-recurrent: true  # same project was scanned on earlier branches, so findings are RECURRENT, not NEW
+    secrets:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      CX_BASE_URI: ${{ secrets.CX_BASE_URI }}
+      CX_TENANT: ${{ secrets.CX_TENANT }}
+      CX_CLIENT_ID: ${{ secrets.CX_CLIENT_ID }}
+      CX_CLIENT_SECRET: ${{ secrets.CX_CLIENT_SECRET }}
+      APP_ID: ${{ secrets.APP_ID }}
+      APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
