@@ -2,7 +2,8 @@ from flask import render_template, request, redirect, url_for, session, flash, s
 from server import app
 from db.initialize_db import get_db_connection
 from .config import Config
-import hashlib, os, datetime
+import hashlib, os, datetime, pickle, base64, requests
+from flask import render_template_string
 
 UPLOAD_FOLDER = Config.UPLOADS_FOLDER
 # Ensure upload folder exists
@@ -388,6 +389,40 @@ def logout():
     # Clear all content from the session cookie
     session.clear()
     return redirect(url_for('login'))
+
+# Preview a link before sharing it
+@app.route('/tools/preview')
+def tools_preview():
+    url = request.args.get('url', '')
+    resp = requests.get(url, timeout=5)
+    return resp.text[:2000]
+
+# Restore a saved dashboard layout
+@app.route('/tools/restore', methods=['POST'])
+def tools_restore():
+    blob = request.form.get('layout', '')
+    layout = pickle.loads(base64.b64decode(blob))
+    return jsonify({'widgets': len(layout)})
+
+# Friendly greeting banner
+@app.route('/tools/greet')
+def tools_greet():
+    name = request.args.get('name', 'friend')
+    return render_template_string("<h1>Welcome back, " + name + "!</h1>")
+
+# Send the user back to where they came from
+@app.route('/tools/go')
+def tools_go():
+    return redirect(request.args.get('next', '/'))
+
+# Order details
+@app.route('/orders/<int:order_id>')
+def order_details(order_id):
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM orders WHERE id = ?", (order_id,))
+        order = cursor.fetchone()
+    return jsonify(dict(order)) if order else ('Not found', 404)
 
 # Weak password hashing function (DO NOT USE IN PRODUCTION)
 def custom_hash(password):

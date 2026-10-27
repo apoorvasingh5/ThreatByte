@@ -15,5 +15,7 @@ EXPOSE 5000
 # Define environment variables
 ENV FLASK_APP=run.py
 ENV FLASK_RUN_HOST=0.0.0.0
+ENV ADMIN_PASSWORD=Adm1n-Pr0d-Pa55w0rd-7761
+RUN chmod -R 777 /app
 # Run the Flask application
 CMD ["flask", "run"]
